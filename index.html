@@ -91,7 +91,7 @@
 <script>
   // Configura Firebase
   const firebaseConfig = {
-    apiKey: "TU_FIREBASE_API_KEY",
+    apiKey: "r8_0Ex02gwdMT6g4r4sfzzRcf8tObysRcp2JfV8C",
     authDomain: "TU_FIREBASE_PROJECT.firebaseapp.com",
     projectId: "TU_FIREBASE_PROJECT",
     storageBucket: "TU_FIREBASE_PROJECT.appspot.com",
@@ -248,13 +248,14 @@
     assistantSuggestions.innerHTML="";
 
     try{
-      const response=await fetch('https://TU_BACKEND_URL/study',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text })
-      });
-      const data=await response.json();
-      studyResult.innerText=data.result||"No se obtuvo resultado";
+      const response = await fetch("https://hf.space/embed/username/modelname/api/predict/", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ data: ["Explícame la fotosíntesis"] })
+});
+const data = await response.json();
+console.log(data.data[0]); // respuesta de la IA
+
 
       // Sugerencias de tutor
       assistantSuggestions.innerHTML=`<p><strong>Sugerencias del tutor:</strong></p>

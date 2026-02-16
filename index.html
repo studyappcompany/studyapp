@@ -1,288 +1,138 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyPro Tutor Virtual</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
-
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-<style>
-  body { margin:0; font-family:'Roboto',sans-serif; background:#f5f5f5; }
-  .container { max-width: 800px; margin:auto; padding:20px; }
-  h1 { text-align:center; color:#333; }
-  input, button, textarea { width: 100%; padding:12px; margin:6px 0; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; font-size:16px; }
-  button { background:#1976d2; color:#fff; border:none; cursor:pointer; transition:0.3s; }
-  button:hover { background:#115293; }
-  .hidden { display:none; }
-  .card { background:#fff; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-  .streak { color:#388e3c; font-weight:700; }
-  .referral, .result, .session-item { background:#e3f2fd; padding:10px; border-radius:6px; margin-top:6px; }
-  .session-item { display:flex; justify-content:space-between; align-items:center; }
-  .session-date { font-weight:500; }
-  .fade { animation: fadeIn 0.5s ease-in-out; }
-  @keyframes fadeIn { from {opacity:0} to {opacity:1} }
-  .tabs { display:flex; justify-content:space-around; margin-top:10px; }
-  .tab { cursor:pointer; padding:10px 20px; border-radius:6px; background:#1976d2; color:#fff; transition:0.3s; }
-  .tab.active { background:#115293; }
-  .assistant { background:#fff3e0; padding:10px; border-radius:6px; margin-top:10px; }
-  .assistant p { margin:5px 0; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyPro - Tutor Virtual</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f2f8ff; }
+    input, textarea { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; border-radius: 5px; border: none; background: #007bff; color: white; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0056b3; }
+    #study-result, #assistant-suggestions { margin-top: 20px; padding: 10px; border-radius: 5px; background: #e6f0ff; }
+  </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>StudyPro Tutor Virtual</h1>
+  <h1>StudyPro - Tutor Virtual</h1>
 
-  <!-- Autenticación -->
-  <div id="auth-section">
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <input type="text" id="referral" placeholder="Código de referido (opcional)">
-    <button id="login-btn">Entrar / Registrar</button>
-    <p id="auth-msg" style="color:red;"></p>
+  <div id="login-screen">
+    <input type="email" id="email" placeholder="Correo electrónico">
+    <input type="password" id="password" placeholder="Contraseña">
+    <button id="login-btn">Entrar / Registrarse</button>
   </div>
 
-  <!-- App -->
-  <div id="app-section" class="hidden fade">
-
-    <p>
-      Bienvenido <span id="user-id"></span> |
-      <span class="streak">Racha: <span id="streak-count">0</span></span>
-    </p>
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active" id="tab-study">Estudiar</div>
-      <div class="tab" id="tab-stats">Estadísticas</div>
-      <div class="tab" id="tab-history">Historial</div>
-    </div>
-
-    <!-- Secciones -->
-    <div id="section-study" class="card fade">
-      <textarea id="study-text" placeholder="Escribe tu pregunta o tarea"></textarea>
-      <button id="study-btn">Preguntar al tutor</button>
-      <div class="result" id="study-result"></div>
-      <div class="assistant" id="assistant-suggestions"></div>
-      <div class="referral">Tu código de referido: <span id="my-referral"></span></div>
-    </div>
-
-    <div id="section-stats" class="card fade hidden">
-      <p>Total de sesiones: <span id="total-sessions">0</span></p>
-      <p>Racha actual: <span id="streak-count-stats">0</span></p>
-      <p>Total referidos: <span id="total-referrals">0</span></p>
-    </div>
-
-    <div id="section-history" class="card fade hidden">
-      <h3>Historial de sesiones</h3>
-      <div id="history-list"></div>
-    </div>
-
+  <div id="home-screen" style="display:none;">
+    <textarea id="text-input" placeholder="Escribe tu pregunta aquí"></textarea>
+    <button id="study-btn">Preguntar al tutor</button>
+    <div id="study-result"></div>
+    <div id="assistant-suggestions"></div>
+    <p>Streak diario: <span id="streak-count">0</span></p>
     <button id="logout-btn">Cerrar sesión</button>
   </div>
-</div>
 
 <script>
-  // Configura Firebase
+  // --------------------- FIREBASE CONFIG ---------------------
   const firebaseConfig = {
-    apiKey: "r8_0Ex02gwdMT6g4r4sfzzRcf8tObysRcp2JfV8C",
-    authDomain: "TU_FIREBASE_PROJECT.firebaseapp.com",
-    projectId: "TU_FIREBASE_PROJECT",
-    storageBucket: "TU_FIREBASE_PROJECT.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROJECT_ID.firebaseapp.com",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_PROJECT_ID.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId: "TU_APP_ID"
   };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // DOM Elements
-  const authSection = document.getElementById('auth-section');
-  const appSection = document.getElementById('app-section');
-  const emailInput = document.getElementById('email');
-  const passInput = document.getElementById('password');
-  const referralInput = document.getElementById('referral');
-  const loginBtn = document.getElementById('login-btn');
-  const authMsg = document.getElementById('auth-msg');
+  const loginScreen = document.getElementById("login-screen");
+  const homeScreen = document.getElementById("home-screen");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const streakCount = document.getElementById("streak-count");
 
-  const userIdSpan = document.getElementById('user-id');
-  const streakCountSpan = document.getElementById('streak-count');
-  const streakCountStats = document.getElementById('streak-count-stats');
-  const totalSessionsSpan = document.getElementById('total-sessions');
-  const totalReferralsSpan = document.getElementById('total-referrals');
-  const myReferralSpan = document.getElementById('my-referral');
+  // --------------------- LOGIN / REGISTER ---------------------
+  loginBtn.addEventListener("click", () => {
+    const email = emailInput.value;
+    const pass = passwordInput.value;
+    auth.signInWithEmailAndPassword(email, pass)
+      .catch(() => auth.createUserWithEmailAndPassword(email, pass));
+  });
 
-  const studyText = document.getElementById('study-text');
-  const studyBtn = document.getElementById('study-btn');
-  const studyResult = document.getElementById('study-result');
-  const assistantSuggestions = document.getElementById('assistant-suggestions');
+  logoutBtn.addEventListener("click", () => auth.signOut());
 
-  const historyList = document.getElementById('history-list');
-  const logoutBtn = document.getElementById('logout-btn');
-
-  const tabStudy = document.getElementById('tab-study');
-  const tabStats = document.getElementById('tab-stats');
-  const tabHistory = document.getElementById('tab-history');
-
-  const sectionStudy = document.getElementById('section-study');
-  const sectionStats = document.getElementById('section-stats');
-  const sectionHistory = document.getElementById('section-history');
-
-  // Tabs functionality
-  tabStudy.addEventListener('click',()=>{ showTab('study'); });
-  tabStats.addEventListener('click',()=>{ showTab('stats'); });
-  tabHistory.addEventListener('click',()=>{ showTab('history'); });
-
-  function showTab(tab){
-    tabStudy.classList.remove('active');
-    tabStats.classList.remove('active');
-    tabHistory.classList.remove('active');
-    sectionStudy.classList.add('hidden');
-    sectionStats.classList.add('hidden');
-    sectionHistory.classList.add('hidden');
-
-    if(tab==='study'){ tabStudy.classList.add('active'); sectionStudy.classList.remove('hidden'); }
-    if(tab==='stats'){ tabStats.classList.add('active'); sectionStats.classList.remove('hidden'); }
-    if(tab==='history'){ tabHistory.classList.add('active'); sectionHistory.classList.remove('hidden'); }
-  }
-
-  // Show app
-  function showApp(user){
-    authSection.classList.add('hidden');
-    appSection.classList.remove('hidden');
-    userIdSpan.innerText = user.uid;
-    initUserData(user.uid);
-  }
-
-  async function initUserData(uid){
-    const today = new Date().toISOString().split('T')[0];
-    const docRef = db.collection('stats').doc(uid);
-    const doc = await docRef.get();
-
-    let streak=1,totalSessions=1,referrals=0;
-    if(doc.exists){
-      const data=doc.data();
-      streak=(data.lastDate!==today)?(data.streak||0)+1:(data.streak||0);
-      totalSessions=(data.totalSessions||0)+1;
-      referrals=data.referrals||0;
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginScreen.style.display = "none";
+      homeScreen.style.display = "block";
+      updateStreak(user.uid);
+    } else {
+      loginScreen.style.display = "block";
+      homeScreen.style.display = "none";
     }
+  });
 
-    docRef.set({ streak, lastDate: today, totalSessions, referrals }, { merge:true });
-    streakCountSpan.innerText=streak;
-    streakCountStats.innerText=streak;
-    totalSessionsSpan.innerText=totalSessions;
-    totalReferralsSpan.innerText=referrals;
-    myReferralSpan.innerText=uid.slice(0,6);
-
-    loadHistory(uid);
+  // --------------------- ACTUALIZAR STREAK ---------------------
+  function updateStreak(uid) {
+    const today = new Date().toISOString().slice(0,10);
+    db.collection("stats").doc(uid).get().then(doc => {
+      let streak = doc.data()?.streak || 0;
+      const lastDate = doc.data()?.lastDate || "";
+      if (lastDate !== today) streak += 1;
+      streakCount.innerText = streak;
+      db.collection("stats").doc(uid).set({ streak, lastDate: today });
+    });
   }
 
-  async function loadHistory(uid){
-    const historyRef=db.collection('history').doc(uid);
-    const doc=await historyRef.get();
-    historyList.innerHTML='';
-    if(doc.exists){
-      const sessions=doc.data().sessions||[];
-      sessions.slice().reverse().forEach(s=>{
-        const div=document.createElement('div');
-        div.className='session-item';
-        div.innerHTML=`<span class="session-date">${s.date}</span><span>${s.text}</span>`;
-        historyList.appendChild(div);
+  // --------------------- IA TUTOR ---------------------
+  const studyBtn = document.getElementById("study-btn");
+  const textInput = document.getElementById("text-input");
+  const studyResult = document.getElementById("study-result");
+  const assistantSuggestions = document.getElementById("assistant-suggestions");
+
+  studyBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("Debes iniciar sesión primero");
+    const text = textInput.value.trim();
+    if (!text) return alert("Escribe tu pregunta");
+
+    studyResult.innerText = "Procesando...";
+
+    try {
+      const response = await fetch("https://hf.space/embed/akhaliq/mini-gpt4/+/api/predict/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: [text] })
       });
-    }
-  }
+      const data = await response.json();
+      studyResult.innerText = data?.data?.[0] || "No se obtuvo respuesta";
 
-  function saveHistory(uid,text){
-    const historyRef=db.collection('history').doc(uid);
-    historyRef.get().then(doc=>{
-      let sessions=[];
-      if(doc.exists) sessions=doc.data().sessions||[];
-      sessions.push({ date:new Date().toLocaleString(), text });
-      historyRef.set({ sessions }, { merge:true });
-      loadHistory(uid);
-    });
-  }
+      assistantSuggestions.innerHTML = `
+        <p>📌 Resume con tus palabras.</p>
+        <p>📌 Divide la tarea en pasos.</p>
+        <p>📌 Revisa los conceptos principales.</p>
+      `;
 
-  // Login/Register
-  loginBtn.addEventListener('click', async ()=>{
-    const email=emailInput.value.trim();
-    const password=passInput.value.trim();
-    const referralCode=referralInput.value.trim();
-    if(!email||!password) return authMsg.innerText="Completa email y contraseña";
+      // Actualizar streak
+      const today = new Date().toISOString().slice(0,10);
+      db.collection("stats").doc(user.uid).get().then(doc => {
+        let streak = doc.data()?.streak || 0;
+        const lastDate = doc.data()?.lastDate || "";
+        if (lastDate !== today) streak += 1;
+        streakCount.innerText = streak;
+        db.collection("stats").doc(user.uid).set({ streak, lastDate: today });
+      });
 
-    try{
-      const res=await auth.signInWithEmailAndPassword(email,password);
-      showApp(res.user);
-      handleReferral(res.user.uid,referralCode);
-    } catch(err){
-      try{
-        const res=await auth.createUserWithEmailAndPassword(email,password);
-        showApp(res.user);
-        handleReferral(res.user.uid,referralCode);
-      } catch(e){ authMsg.innerText=e.message; }
+    } catch (err) {
+      studyResult.innerText = "Error al conectar con la IA";
+      console.error(err);
     }
   });
-
-  function handleReferral(uid,referralCode){
-    if(!referralCode) return;
-    const refDoc=db.collection('stats').doc(referralCode);
-    refDoc.get().then(doc=>{
-      if(doc.exists){
-        const current=doc.data().referrals||0;
-        refDoc.set({ referrals: current+1 }, { merge:true });
-      }
-    });
-  }
-
-  // Study Button
-  studyBtn.addEventListener('click', async ()=>{
-    const text=studyText.value.trim();
-    if(!text) return;
-    studyResult.innerText="Procesando...";
-    assistantSuggestions.innerHTML="";
-
-    try{
-      const response = await fetch("https://hf.space/embed/username/modelname/api/predict/", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ data: ["Explícame la fotosíntesis"] })
-});
-const data = await response.json();
-console.log(data.data[0]); // respuesta de la IA
-
-
-      // Sugerencias de tutor
-      assistantSuggestions.innerHTML=`<p><strong>Sugerencias del tutor:</strong></p>
-        <p>📌 Revisa los conceptos principales de tu pregunta.</p>
-        <p>📌 Intenta escribir un resumen con tus palabras.</p>
-        <p>📌 Si es un ejercicio, descompónlo en pasos pequeños.</p>`;
-
-      const user=auth.currentUser;
-      if(user){ initUserData(user.uid); saveHistory(user.uid,text); }
-
-    } catch(e){
-      studyResult.innerText="Error en backend";
-    }
-  });
-
-  // Logout
-  logoutBtn.addEventListener('click',()=>{
-    auth.signOut();
-    authSection.classList.remove('hidden');
-    appSection.classList.add('hidden');
-  });
-
-  // Auth state listener
-  auth.onAuthStateChanged(user=>{
-    if(user) showApp(user);
-  });
-
 </script>
 </body>
 </html>
